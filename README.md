@@ -19,12 +19,14 @@ module.exports = {
       options: {
         plugins: [
           {
-            resolve: '@suin/gatsby-transformer-replace-urls',
+            resolve: '@suin/gatsby-rehype-replace-urls',
             options: {
               replace(url) {
-                if (url.protocol === 'http:') {
-                  url.protocol = 'https'
+                const u = new URL(url)
+                if (u.protocol === 'http:') {
+                  u.protocol = 'https'
                 }
+                return u
               },
             },
           },

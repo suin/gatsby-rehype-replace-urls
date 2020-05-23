@@ -31,7 +31,7 @@ namespace plugin {
      * @param node The [Element](https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/hast/index.d.ts#L45) that has the URL
      * @returns The new URL
      */
-    (url: URL, attribute: string, node: hast.Element): URL | string | void
+    (url: string, attribute: string, node: hast.Element): URL | string | void
   }
 }
 
@@ -47,14 +47,9 @@ const replace = (
     let url = node.properties[attribute] as string
     const replacers = typeof replacer === 'function' ? [replacer] : replacer
     for (const replacer of replacers) {
-      const urlObj = new URL(url)
-      const result = replacer(urlObj, attribute, node)
-      if (result instanceof URL) {
-        url = result.href
-      } else if (typeof result === 'string') {
-        url = result
-      } else {
-        url = urlObj.href
+      const result = replacer(url, attribute, node)
+      if (result !== undefined) {
+        url = `${result}`
       }
     }
     node.properties[attribute] = url

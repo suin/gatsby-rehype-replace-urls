@@ -5,14 +5,16 @@ import hast from 'hast'
 import toHtml from 'hast-util-to-html'
 
 describe('plugin', () => {
-  test('replace HTTP URLs to HTTPS', () => {
+  test('replace HTTP URLs to HTTPS using URL object', () => {
     const transform = setup({
       resolve: '@suin/gatsby-transformer-replace-urls',
       options: {
         replace(url) {
-          if (url.protocol === 'http:') {
-            url.protocol = 'https'
+          const u = new URL(url)
+          if (u.protocol === 'http:') {
+            u.protocol = 'https'
           }
+          return u
         },
       },
     })
@@ -26,8 +28,11 @@ describe('plugin', () => {
       options: {
         replace(url, attribute, node) {
           if (node.tagName === 'img' && attribute === 'src') {
-            url.host = 'cdn.example.com'
+            const u = new URL(url)
+            u.host = 'cdn.example.com'
+            return u
           }
+          return
         },
       },
     })
@@ -42,6 +47,25 @@ describe('plugin', () => {
         </a>
     `)
   })
+
+  test('replace hash only url', () => {
+    const transform = setup({
+      resolve: '@suin/gatsby-transformer-replace-urls',
+      options: {
+        replace(url) {
+          // In this case, you have to compare the url as a string since
+          // `new URL(url)` throws Error like:
+          // "TypeError [ERR_INVALID_URL]: Invalid URL: #hash"
+          if (url === '#hash') {
+            return '#new-hash'
+          }
+          return
+        },
+      },
+    })
+    const output = transform(`<a href="#hash"></a>`)
+    expect(output).toBe(`<a href="#new-hash"></a>`)
+  })
 })
 
 const setup = ({
@@ -51,6 +75,7 @@ const setup = ({
   options?: Options
 }) => (html: string): string => {
   const inAst = toHast(html)
+  // noinspection TypeScriptValidateTypes
   const outAst = plugin(
     { htmlAst: inAst } as Parameters<typeof plugin>[0],
     options as Parameters<typeof plugin>[1],
