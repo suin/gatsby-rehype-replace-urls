@@ -1,6 +1,6 @@
 {
   "name": "@suin/gatsby-rehype-replace-urls",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Gatsby rehype plugin that rewrites URLs of src/href attributes",
   "keywords": [
     "gatsby",

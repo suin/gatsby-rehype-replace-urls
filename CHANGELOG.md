@@ -1,3 +1,15 @@
+# [3.0.0](https://github.com/suin/gatsby-rehype-replace-urls/compare/v2.0.0...v3.0.0) (2020-05-24)
+
+
+### Features
+
+* 🎸 provide Gatsby node info to the replace function ([514b37a](https://github.com/suin/gatsby-rehype-replace-urls/commit/514b37a8063cef9b052e9810fdceed36ca9af1a8))
+
+
+### BREAKING CHANGES
+
+* 🧨 the old functions are no loger compatible
+
 # [2.0.0](https://github.com/suin/gatsby-rehype-replace-urls/compare/v1.0.0...v2.0.0) (2020-05-23)
 
 
