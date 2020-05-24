@@ -2,13 +2,19 @@ import { Plugin } from 'gatsby-transform-rehype'
 import visit from 'unist-util-visit'
 import hast from 'hast'
 import { URL } from 'url'
+import gatsby, { Node } from 'gatsby'
+import { Replacer } from './index'
 
-const plugin: Plugin<plugin.Options> = ({ htmlAst }, options) => {
-  const { replace: replacers } = options ?? {}
-  if (replacers !== undefined) {
-    visit<hast.Element>(htmlAst, 'element', node => {
-      replace(node, 'href', replacers)
-      replace(node, 'src', replacers)
+const plugin: Plugin<plugin.Options, 'htmlAst' | 'htmlNode' | 'getNode'> = (
+  { htmlAst, htmlNode: node, getNode },
+  options,
+) => {
+  const { replace: replacer } = options ?? {}
+  const parent = getNode(node.parent)
+  if (replacer !== undefined) {
+    visit<hast.Element>(htmlAst, 'element', element => {
+      replace({ element, attribute: 'href', replacer, node, parent, getNode })
+      replace({ element, attribute: 'src', replacer, node, parent, getNode })
     })
   }
   return htmlAst
@@ -24,35 +30,74 @@ namespace plugin {
   /**
    * A function type that replaces the given URL.
    */
-  export type Replace = {
+  export type Replace = (params: ReplaceParams) => URL | string | void
+
+  /**
+   * The parameters of the replace function.
+   */
+  export type ReplaceParams = {
     /**
-     * @param url The original URL
-     * @param attribute The attribute name that has the URL
-     * @param node The [Element](https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/hast/index.d.ts#L45) that has the URL
-     * @returns The new URL
+     * The original URL to replace
      */
-    (url: string, attribute: string, node: hast.Element): URL | string | void
+    readonly url: string
+
+    /**
+     * The attribute name that has the URL
+     */
+    readonly attribute: string
+
+    /**
+     * The [Element](https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/hast/index.d.ts#L45) that has the URL
+     */
+    readonly element: hast.Element
+
+    /**
+     * HtmlRehype node
+     */
+    readonly node: Node
+
+    /**
+     * HtmlRehype's parent node
+     */
+    readonly parent: Node
+
+    /**
+     * Gatsby utility function to get a node from node ID
+     */
+    readonly getNode: gatsby.NodePluginArgs['getNode']
   }
 }
 
-const replace = (
-  node: hast.Element,
-  attribute: string,
-  replacer: plugin.Replacer,
-): void => {
+const replace = ({
+  replacer,
+  attribute,
+  element,
+  node,
+  parent,
+  getNode,
+}: Omit<plugin.ReplaceParams, 'url'> & {
+  readonly replacer: Replacer
+}): void => {
   if (
-    typeof node.properties === 'object' &&
-    typeof node.properties[attribute] === 'string'
+    typeof element.properties === 'object' &&
+    typeof element.properties[attribute] === 'string'
   ) {
-    let url = node.properties[attribute] as string
+    let url = element.properties[attribute] as string
     const replacers = typeof replacer === 'function' ? [replacer] : replacer
     for (const replacer of replacers) {
-      const result = replacer(url, attribute, node)
+      const result = replacer({
+        url,
+        attribute,
+        element,
+        node,
+        parent,
+        getNode,
+      })
       if (result !== undefined) {
         url = `${result}`
       }
     }
-    node.properties[attribute] = url
+    element.properties[attribute] = url
   }
 }
 

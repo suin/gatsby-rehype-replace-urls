@@ -21,7 +21,7 @@ module.exports = {
           {
             resolve: '@suin/gatsby-rehype-replace-urls',
             options: {
-              replace(url) {
+              replace({ url }) {
                 const u = new URL(url)
                 if (u.protocol === 'http:') {
                   u.protocol = 'https'
@@ -37,4 +37,5 @@ module.exports = {
 }
 ```
 
-More examples see [index.test.ts](./index.test.ts).
+* To know the parameter of the `replace` function, see [API doc](https://suin.github.io/gatsby-rehype-replace-urls/modules/_index_.plugin.html#replaceparams).
+* To learn more examples, see [index.test.ts](./index.test.ts).
